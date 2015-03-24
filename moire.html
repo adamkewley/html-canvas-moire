@@ -49,6 +49,11 @@
     }
 
     var locked = false;
+    var offscreenFrame = document.createElement('canvas');
+    offscreenFrame.width = w;
+    offscreenFrame.height = h;
+    var offscreenCtx = offscreenFrame.getContext('2d');
+    offscreenCtx.fillStyle = '#fff'; // bg
     canvas.addEventListener('mousemove', function(e){
         if(!locked){
             // Lock out render calls from mousemove
@@ -57,22 +62,25 @@
             // Perform a render
             var mousePos = getMousePos(canvas, e);
             requestAnimationFrame(function(){
-                ctx.clearRect(0, 0, w, h); // clear the last frame
+                offscreenCtx.beginPath(); // start a draw
+                offscreenCtx.rect(0, 0, w, h);
+                offscreenCtx.fill();
 
-                ctx.beginPath(); // start a draw
-
-                // load up ctx with the necessary data
-                drawCircles(w/2, h/2, l/2, ctx); // bg circle
+                // load up offscreenCtx with the necessary data
+                drawCircles(w/2, h/2, l/2, offscreenCtx); // bg circle
 
                 // calc diff from center pos
                 var verticalEdge = Math.abs((h/2) - mousePos.y);
                 var horizontalEdge = Math.abs((w/2) - mousePos.x);
                 var deltaR = Math.sqrt(Math.pow(verticalEdge, 2) + Math.pow(horizontalEdge, 2));
 
-                drawCircles(mousePos.x, mousePos.y, (l/2) + deltaR, ctx); // moving circles
+                drawCircles(mousePos.x, mousePos.y, (l/2) + deltaR, offscreenCtx); // moving circles
 
                 // Draw all circles in one call
-                ctx.stroke();
+                offscreenCtx.stroke();
+
+                // Switcharoo the offscreen ctx
+                ctx.drawImage(offscreenFrame, 0, 0);
 
                 // Once render finished, unlock, allowing further render steps.
                 locked = false;
