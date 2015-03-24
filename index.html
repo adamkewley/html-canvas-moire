@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Learn Canvas Element</title>
+</head>
+<body>
+    <div style="position: relative;">
+        <!-- Event Layer -->
+        <canvas id="eventLayer" width="500" height="375"
+             style="position: absolute; z-index: 2; top: 0; left: 0;"></canvas>
+        <!-- The plot -->
+        <canvas id="plotCanvas" width="500" height="375"
+                style="position: absolute; z-index: 0; top: 0; left: 0;"></canvas>
+        <!-- Crosshair -->
+        <canvas id="crosshair" width="500" height="375"
+                style="position: absolute; z-index: 1; top: 0; left: 0;"></canvas>
+    </div>
+</body>
+    <script>
+        var canvas = document.getElementById('plotCanvas');
+        var ctx = canvas.getContext('2d');
+
+        var crosshairCanvas = document.getElementById('crosshair');
+        var crosshairCtx = crosshairCanvas.getContext('2d');
+        crosshairCtx.strokeStyle = '#000';
+
+        for(var x = 0.5; x < 500; x += 10) {
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, 375);
+        }
+
+        for(var y = 0.5; y < 500; y += 10){
+            ctx.moveTo(0, y);
+            ctx.lineTo(500, y);
+        }
+
+        ctx.strokeStyle = '#eee';
+        ctx.stroke();
+
+        // Arrow
+        ctx.beginPath();
+
+        // The x-axis, breaks halfway and has arrow at end
+        ctx.moveTo(0, 40);   // origin
+        ctx.lineTo(240, 40); // go upto break
+        ctx.moveTo(260, 40); // draw from other end of break
+        ctx.lineTo(500, 40); // draw to the end
+        ctx.moveTo(495, 35);
+        ctx.lineTo(500, 40); //draw top of arrow
+        ctx.lineTo(495, 45); // then bottom of arrow
+
+        // The y-axis, same idea as x-axis
+        ctx.moveTo(60, 0);
+        ctx.lineTo(60, 153);
+        ctx.moveTo(60, 173);
+        ctx.lineTo(60, 375);
+        ctx.moveTo(65, 370);
+        ctx.lineTo(60, 375);
+        ctx.lineTo(55, 370);
+
+        ctx.strokeStyle = '#000';
+        ctx.stroke();
+
+        // Axis labels
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText('x', 248, 43);
+        ctx.fillText('y', 58, 165);
+
+        // Top left labels
+        ctx.textBaseline = 'top';
+        ctx.fillText('(0, 0)', 8, 5);
+
+        // Bottom-right text label
+        ctx.textAlign = 'right';
+        // Changed this and above to make positioning easier
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('(500, 375)', 492, 370);
+
+        // Corner dots
+        ctx.fillRect(0, 0, 3, 3);
+        ctx.fillRect(497, 372, 3, 3);
+
+        function drawCrosshair(x, y){
+            crosshairCtx.beginPath();
+
+            // Vertical crosshair line
+            crosshairCtx.moveTo(x, 0);
+            crosshairCtx.lineTo(x, 370);
+
+            // Horizontal crosshair line
+            crosshairCtx.moveTo(0, y);
+            crosshairCtx.lineTo(500, y);
+
+            // clear crosshair canvas
+            crosshairCtx.clearRect(0, 0, 500, 375);
+            // then draw new crosshair
+            crosshairCtx.stroke();
+        }
+
+        function getMousePos(canvas, e){
+            var canvasRect = canvas.getBoundingClientRect();
+            return {
+                x: e.clientX - canvasRect.left,
+                y: e.clientY - canvasRect.top
+            };
+        }
+
+        var eventLayer = document.getElementById('eventLayer');
+
+        eventLayer.addEventListener('mousemove', function(e){
+            var mousePos = getMousePos(canvas, e);
+            drawCrosshair(mousePos.x, mousePos.y);
+        });
+    </script>
+</html>

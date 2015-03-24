@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Learn Canvas Element</title>
+    <style type="text/css">
+        html, body, div, canvas { margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+<div style="position: relative;">
+    <!-- Crosshair -->
+    <canvas id="fractal" width="500" height="500"
+            style="position: absolute; z-index: 1; top: 0; left: 0;"></canvas>
+</div>
+</body>
+<script>
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+
+    var fractal = document.getElementById('fractal');
+    var ctx = fractal.getContext('2d');
+
+    fractal.width = w;
+    fractal.height = h;
+
+
+</script>
+</html>
