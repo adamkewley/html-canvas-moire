@@ -5,17 +5,13 @@
     <title>Learn Canvas Element</title>
     <style type="text/css">
         html, body, div, canvas { margin: 0; padding: 0; }
-        canvas { position: absolute; top: 0; left: 0; }
+        canvas { position: absolute; top: 0; left: 0; background-color: white; }
     </style>
 </head>
 <body>
 <div style="position: relative;">
-    <!-- Event Layer -->
-    <canvas id="eventLayer" width="500" height="500" style="z-index: 2;"></canvas>
-    <!-- Crosshair -->
-    <canvas id="crosshair" width="500" height="500" style="z-index: 1;"></canvas>
-    <!-- The plot -->
-    <canvas id="plotCanvas" width="500" height="500" style="z-index: 0;"></canvas>
+    <!-- Circles -->
+    <canvas id="circles-canvas" width="500" height="500" style="z-index: 2;"></canvas>
 </div>
 </body>
 <script>
@@ -23,71 +19,60 @@
     var h = window.innerHeight;
     var l = Math.sqrt(Math.pow(w, 2) + Math.pow(h, 2)); // Pythagoras' theorem, longest screen length.
 
-    var eventLayer = document.getElementById('eventLayer');
-    var crosshair = document.getElementById('crosshair');
-    var bgCanvas = document.getElementById('plotCanvas');
+    var canvas = document.getElementById('circles-canvas');
 
     // set canvas' window dimensions
-    eventLayer.width = crosshair.width = bgCanvas.width =  w;
-    eventLayer.height = crosshair.height = bgCanvas.height = h;
+    canvas.width =  w;
+    canvas.height = h;
 
-    var bgCtx = bgCanvas.getContext('2d');
-    var crosshairCtx = crosshair.getContext('2d');
+    var ctx =  canvas.getContext('2d');
 
     // Draws concentric circles into `ctx` at pos (`x`,`y`) in
     // 5 px steps upto `maxRadius`
+    var twoPI = Math.PI * 2; // a full circle is 2 pi radians
     function drawCircles(x, y, maxRadius, ctx){
-        var twoPI = Math.PI * 2; // a full circle is 2 pi radians
-
-        ctx.beginPath();
         for(var r = 0.5; r < maxRadius; r += 5) {
             // Move to start of this concentric circle then buffer it
             ctx.moveTo(x + r, y);
             ctx.arc(x, y, r, 0, twoPI);
         }
-
-        // Draw all circles in one call
-        ctx.stroke();
     }
-
-    // Draw background circles
-    drawCircles(w/2, h/2, l/2, bgCtx);
 
     // Get mouse position relative to the canvas, do not use this method
     // if you're styling the canvas element with CSS
+    var canvasRect = canvas.getBoundingClientRect();
     function getMousePos(canvas, e){
-        var canvasRect = canvas.getBoundingClientRect();
         return {
             x: e.clientX - canvasRect.left,
             y: e.clientY - canvasRect.top
         };
     }
 
-    /*  Draw a large moire off-screen. Sections of this moire will be cut into
-        view depending on the mouse position. This moire is as large as necessary to
-        cover all possible mouse positions (e.g. top-right, bottom-left, etc.). Using a
-        buffer moire prevents having to redraw the concentric circles. The layering
-        effect is handled by the browser's z-index calculator instead.
-     */
-    var bufferMoire = document.createElement('canvas');
-    bufferMoire.width = 2 * w;
-    bufferMoire.height = 2 * h;
-    var bufferMoireCtx = bufferMoire.getContext('2d');
-    drawCircles(w, h, l, bufferMoireCtx); // twice as large as bg moire
-
-    // Locking prevents the mousemove event from drawing faster than the
-    // browser's FPS rate (pointless)
     var locked = false;
-    eventLayer.addEventListener('mousemove', function(e){
+    canvas.addEventListener('mousemove', function(e){
         if(!locked){
             // Lock out render calls from mousemove
             locked = true;
 
             // Perform a render
-            var mousePos = getMousePos(bgCanvas, e);
+            var mousePos = getMousePos(canvas, e);
             requestAnimationFrame(function(){
-                crosshairCtx.clearRect(0, 0, w, h);
-                crosshairCtx.drawImage(bufferMoire, mousePos.x - w, mousePos.y - h);
+                ctx.clearRect(0, 0, w, h); // clear the last frame
+
+                ctx.beginPath(); // start a draw
+
+                // load up ctx with the necessary data
+                drawCircles(w/2, h/2, l/2, ctx); // bg circle
+
+                // calc diff from center pos
+                var verticalEdge = Math.abs((h/2) - mousePos.y);
+                var horizontalEdge = Math.abs((w/2) - mousePos.x);
+                var deltaR = Math.sqrt(Math.pow(verticalEdge, 2) + Math.pow(horizontalEdge, 2));
+
+                drawCircles(mousePos.x, mousePos.y, (l/2) + deltaR, ctx); // moving circles
+
+                // Draw all circles in one call
+                ctx.stroke();
 
                 // Once render finished, unlock, allowing further render steps.
                 locked = false;
